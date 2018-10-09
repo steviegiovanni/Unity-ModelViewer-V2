@@ -143,21 +143,20 @@ namespace ModelViewer
         }
 
 		/// <summary>
-		/// constructor that takes a go and a parent node as well as the cage transform
+		/// constructor that takes a go and a parent node
 		/// </summary>
 		public Node(GameObject go, Node parent, Transform cage)
 		{
 			// assign parent
 			Parent = parent;
 
-			// assign game object
+			// assign game object and game object name
 			GameObject = go;
             GOName = GameObject.name;
+            Name = go.name; // set default node name to the game object name
 
-			// get the original transforms, position relative to the cage
-			P0 = cage.InverseTransformPoint(go.transform.position);
-            //R0 = go.transform.rotation;
-            //R0 = go.transform.rotation * Quaternion.Inverse(cage.rotation);
+            // get the original transforms, position relative to the cage
+            P0 = cage.InverseTransformPoint(go.transform.position);
             R0 = Quaternion.Inverse(cage.rotation) * go.transform.rotation;
             S0 = go.transform.localScale;
 
@@ -176,16 +175,15 @@ namespace ModelViewer
 			else
 				Material = null;
 
+            // initialized locked to true (can't be interacted with)
             Locked = true;
-            Name = go.name;
 
 			// add collider if doesn't exist
 			if (HasMesh && go.GetComponent<Collider>() == null)
 				go.AddComponent<MeshCollider>();
 
-			// check childs
-			foreach (Transform child in go.transform)
-			{
+			// check childs and do recursive node reconstruction
+			foreach (Transform child in go.transform){
 				Childs.Add(new Node(child.gameObject, this,cage));
 			}
 		}
@@ -195,10 +193,8 @@ namespace ModelViewer
         /// </summary>
         public Node(SerializableNode sn)
         {
-            //Childs = children,
             GameObject = sn.GameObject;
             HasMesh = sn.HasMesh;
-            //Parent = null,
             P0 = sn.P0;
             R0 = sn.R0;
             S0 = sn.S0;
@@ -227,7 +223,7 @@ namespace ModelViewer
     }
 
     /// <summary>
-    /// structure used to store node data after serialization
+    /// structure used to store node data for serialization
     /// </summary>
     [System.Serializable]
     public struct SerializableNode
@@ -253,15 +249,6 @@ namespace ModelViewer
     /// </summary>
     public class MultiPartsObject : MonoBehaviour, ISerializationCallbackReceiver
     {
-		/// <summary>
-		/// original position of the cage
-		/// </summary>
-		private Vector3 _cagePos;
-		public Vector3 CagePos{
-			get{ return _cagePos;}
-			set{ _cagePos = value;}
-		}
-
         /// <summary>
         /// the root node
         /// </summary>
@@ -289,7 +276,7 @@ namespace ModelViewer
         }
 
         /// <summary>
-        /// the virtual size of the object
+        /// the desired virtual size of the object
         /// </summary>
         [Range(0.0f, 10.0f)]
         [SerializeField]
@@ -329,15 +316,15 @@ namespace ModelViewer
         /// highlight material for selected nodes
         /// </summary>
         [SerializeField]
-        private Material _highlightMaterial;
-        public Material HighlightMaterial
+        private Material _onSelectedMaterial;
+        public Material OnSelectedMaterial
         {
-            get { return _highlightMaterial; }
-            set { _highlightMaterial = value; }
+            get { return _onSelectedMaterial; }
+            set { _onSelectedMaterial = value; }
         }
 
 		/// <summary>
-		/// highlight material for selected nodes
+		/// silhouette material (to be used when generating a silhouette of the original object)
 		/// </summary>
 		[SerializeField]
 		private Material _silhouetteMaterial;
@@ -346,6 +333,28 @@ namespace ModelViewer
 			get { return _silhouetteMaterial; }
 			set { _silhouetteMaterial = value; }
 		}
+
+        /// <summary>
+        /// whether we show the silhouette or not
+        /// </summary>
+        [SerializeField]
+        private bool _showSilhouette = true;
+        public bool ShowSilhouette
+        {
+            get {
+                return _showSilhouette;
+            }
+            set {
+                _showSilhouette = value;
+                if (_showSilhouette == true)
+                {
+                    if (_silhouette == null)
+                        SetupSilhouette();
+                }
+                if (_silhouette != null)
+                    _silhouette.SetActive(_showSilhouette);
+            }
+        } 
 
         /// <summary>
         /// the frame attached to the controller frame (could be the head for gazing)
@@ -359,7 +368,7 @@ namespace ModelViewer
         }
 
         /// <summary>
-        /// whether we should snap or not
+        /// whether we should snap or not after we release a node
         /// </summary>
         [SerializeField]
         private bool _snap = true;
@@ -381,7 +390,7 @@ namespace ModelViewer
 		}
 
 		/// <summary>
-		/// indicate whether to deselect selected node if they snap
+		/// indicate whether to deselect selected node when they snap
 		/// </summary>
 		[SerializeField]
 		private bool _deselectOnSnapped = true;
@@ -444,27 +453,16 @@ namespace ModelViewer
 
         void Awake()
         {
+            // check movable frame exists
+            if (MovableFrame == null)
+                Debug.LogWarning("no movable frame assigned. will not be able to move objects around.");
+
             // construct dictionary on awake as we're not serializing the dictionary
             ConstructDictionary();
 
             // setup default silhouette if we don't have a task list
-            //SetupSilhouette();
-        }
-
-        // Use this for initialization
-        void Start()
-        {
-			// get the initial position of the cage. on runtime the cage will be moved around to make the focused object centered
-			CagePos = this.transform.position;
-
-			// check movable frame exists
-            if (MovableFrame == null)
-                Debug.LogWarning("no movable frame assigned. will not be able to move objects around.");
-
-            /*Setup();
-            FitToScale(Root, VirtualScale);
-			SetupSilhouette ();
-			Scatter (Root);*/
+            if(ShowSilhouette)
+                SetupSilhouette();
         }
 
 		/// <summary>
@@ -482,70 +480,47 @@ namespace ModelViewer
 			_silhouette.transform.SetPositionAndRotation (this.transform.position, this.transform.rotation);
 			_silhouette.transform.localScale = this.transform.localScale;
 
-			// if setup (root is not null), copy the model
-			if (Root != null) {
-				GameObject silhouette = Instantiate (Root.GameObject, _silhouette.transform);
-				MakeSilhouette (silhouette); // call makesilhouette recursive
-			}
+			// if setup (root is not null), call setup silhouette recursively
+			if (Root != null) 
+                SetupSilhouetteRecursive(Root, _silhouette);
 		}
 
-		/// <summary>
-		/// recursive function to create a silhouette of the viewed model
-		/// </summary>
-		public void MakeSilhouette (GameObject go){
-			if (go.GetComponent<Collider> () != null)
-				Destroy (go.GetComponent<Collider> ());
-			if (go.GetComponent<Renderer> () != null)
-				go.GetComponent<Renderer> ().material = SilhouetteMaterial;
-			foreach (Transform child in go.transform)
-				MakeSilhouette (child.gameObject);
-		}
-
-		/// <summary>
-		/// recursive function to scatter components of viewed model around the area
-		/// </summary>
-		public void Scatter(Node node){
-			if (node.HasMesh) {
-				node.GameObject.transform.position = Random.insideUnitSphere * 2;
-			}
-
-			foreach (var child in node.Childs)
-				Scatter (child);
-		}
+        /// <summary>
+        /// setup silhouette recursively node by node
+        /// </summary>
+        public void SetupSilhouetteRecursive(Node node, GameObject parent)
+        {
+            GameObject copy = new GameObject(node.GameObject.name);
+            copy.transform.SetPositionAndRotation(this.transform.TransformPoint(node.P0), this.transform.rotation * node.R0);
+            copy.transform.localScale = node.GameObject.transform.lossyScale;
+            if (node.GameObject.GetComponent<MeshFilter>() != null)
+            {
+                copy.AddComponent<MeshFilter>();
+                copy.GetComponent<MeshFilter>().sharedMesh = node.GameObject.GetComponent<MeshFilter>().sharedMesh;
+            }
+            if (node.GameObject.GetComponent<Renderer>() != null)
+            {
+                copy.AddComponent<MeshRenderer>();
+                copy.GetComponent<MeshRenderer>().material = SilhouetteMaterial;
+            }
+            copy.transform.SetParent(parent.transform);
+            
+            foreach(var child in node.Childs)
+                SetupSilhouetteRecursive(child, copy);
+        }
 
         // Update is called once per frame
         void Update()
         {
-            // test input without AR/VR setup
-            /*if (Input.GetKeyUp(KeyCode.Q))
-            {
-                GrabCage();
-            }
-
-            if (Input.GetKeyUp(KeyCode.W))
-            {
-                ReleaseCage();
-            }
-
-            if (Input.GetKeyUp(KeyCode.A))
-            {
-                Select();
-            }
-
-            if (Input.GetKeyUp(KeyCode.S))
-            {
-                Deselect();
-            }
-
-            if (Input.GetKeyUp(KeyCode.Z))
-            {
-                if (Root != null)
-                    Debug.Log(Root.GameObject.name);
-            }*/
+            // Update the transform of silhouette based on where the cage transform
+            if (_silhouette != null)
+                _silhouette.transform.SetPositionAndRotation(this.transform.position, this.transform.rotation);
+            if (Input.GetKeyUp(KeyCode.Space))
+                ShowSilhouette = !ShowSilhouette;
         }
 
         /// <summary>
-        /// setup internal node structure
+        /// setup internal node structure, called from the editor
         /// </summary>
         public void Setup()
         {
@@ -585,7 +560,7 @@ namespace ModelViewer
         }
 
         /// <summary>
-        /// resize the cage to fit the focused node to a scale
+        /// resize the cage to fit the object to a scale
         /// </summary>
         public void FitToScale(Node node, float scale)
         {
@@ -595,8 +570,6 @@ namespace ModelViewer
                 float scaleFactor = scale / b.size.magnitude;
                 CurrentScale = scaleFactor;
 				this.transform.localScale = Vector3.one * scaleFactor;
-				//this.transform.position = this.transform.position - (b.center  - this.transform.position) * scaleFactor;
-				//this.transform.position = CagePos - (b.center  - CagePos) * scaleFactor;
             }
         }
 
@@ -701,7 +674,7 @@ namespace ModelViewer
             if (node.Locked) return;
             node.Selected = true;
             if (node.HasMesh)
-                node.GameObject.GetComponent<Renderer>().material = new Material(HighlightMaterial);
+                node.GameObject.GetComponent<Renderer>().material = new Material(OnSelectedMaterial);
             if (!SelectedNodes.Contains(node))
                 SelectedNodes.Add(node);
             if (OnSelectEvent != null)
