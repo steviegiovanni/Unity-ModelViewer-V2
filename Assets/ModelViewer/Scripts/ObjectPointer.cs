@@ -14,25 +14,31 @@ namespace ModelViewer
     /// </summary>
     public interface IHasRay
     {
+        /// <summary>
+        /// get the ray component that will used as the pointer
+        /// </summary>
         Ray GetRay();
     }
 
     /// <summary>
     /// Object pointer returns the hitinfo of a specified ray in the simulation
-    /// implemented as singleton to handle situation where users forgot to put one in the scene
-    /// as this will be used by the multipartsobject component
     /// </summary>
     public class ObjectPointer : MonoBehaviour
     {
+        /// <summary>
+        /// the instance of an object pointer
+        /// </summary>
         static private ObjectPointer _instance = null;
         static public ObjectPointer Instance
         {
             get
             {
                 if (_instance == null)
-                {
                     _instance = GameObject.FindObjectOfType<ObjectPointer>();
-                }
+
+                if (_instance == null)
+                    Debug.LogError("No ObjectPointer found. Don't forget to put an ObjectPointer into the scene");
+
                 return _instance;
             }
         }
@@ -60,6 +66,8 @@ namespace ModelViewer
             {
                 if (_lr == null)
                     _lr = GetComponent<LineRenderer>();
+                if (_lr == null)
+                    Debug.LogError("No line renderer attached. Don't forget to attach a line renderer to the object.");
                 return _lr;
             }
         }

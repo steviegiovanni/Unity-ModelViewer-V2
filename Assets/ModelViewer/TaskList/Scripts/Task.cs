@@ -94,7 +94,7 @@ namespace ModelViewer
         /// <summary>
         /// whether the task is enabled or not
         /// </summary>
-        private bool _enabled = false;
+        private bool _enabled = true;
         public bool Enabled
         {
             get { return _enabled; }

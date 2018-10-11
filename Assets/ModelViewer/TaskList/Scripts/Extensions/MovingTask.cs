@@ -101,13 +101,19 @@ namespace ModelViewer
         /// </summary>
         public override void DrawTaskHint()
         {
-            TaskList.Hint = GameObject.Instantiate(TaskList.HintPrefab,TaskList.MPO.transform.TransformPoint(Position),TaskList.MPO.transform.rotation * Rotation);
-            TaskList.Hint.GetComponent<MeshFilter>().sharedMesh = GameObject.GetComponent<MeshFilter>().sharedMesh;
+            TaskList.Hint = new GameObject();
+            TaskList.Hint.transform.SetPositionAndRotation(TaskList.MPO.transform.TransformPoint(Position), TaskList.MPO.transform.rotation * Rotation);
             TaskList.Hint.transform.localScale = GameObject.transform.lossyScale;
-            if (TaskList.Hint.GetComponent<Collider>() != null)
+            //TaskList.Hint = GameObject.Instantiate(TaskList.HintPrefab,TaskList.MPO.transform.TransformPoint(Position),TaskList.MPO.transform.rotation * Rotation);
+            TaskList.Hint.AddComponent<MeshFilter>();
+            TaskList.Hint.GetComponent<MeshFilter>().sharedMesh = GameObject.GetComponent<MeshFilter>().sharedMesh;
+            TaskList.Hint.AddComponent<MeshRenderer>();
+            TaskList.Hint.GetComponent<Renderer>().material = TaskList.SilhouetteMaterial;
+
+            /*if (TaskList.Hint.GetComponent<Collider>() != null)
                 GameObject.Destroy(TaskList.Hint.GetComponent<Collider>());
             if (TaskList.Hint.GetComponent<Renderer>() != null)
-                TaskList.Hint.GetComponent<Renderer>().material = TaskList.SilhouetteMaterial;
+                TaskList.Hint.GetComponent<Renderer>().material = TaskList.SilhouetteMaterial;*/
         }
 
         /// <summary>

@@ -33,17 +33,6 @@ namespace ModelViewer
             set { _hintDuration = value; }
         }
 
-        /// <summary>
-        /// the text mesh prefab to be used to show the task name
-        /// </summary>
-        [SerializeField]
-        private GameObject _hintPrefab;
-
-        /// <summary>
-        /// the currently instantiated hint
-        /// </summary>
-        private GameObject hintObject;
-
         [SerializeField]
         private GameObject hintText;
 
@@ -53,25 +42,11 @@ namespace ModelViewer
             TaskList.TaskStartListeners.AddListener(ShowNextTask);
         }
 
-        private void Update()
-        {
-            // update elapsed time, if it's more than duration, destroys the hint
-            /*elapsedTime += Time.deltaTime;
-            if (HintDuration <= elapsedTime && hintObject != null)
-                Destroy(hintObject);*/
-        }
-
         /// <summary>
         /// the function to be called when this object receives the start task event
         /// </summary>
         public void ShowNextTask(Task task)
         {
-            /*elapsedTime = 0.0f;
-            //hintObject = Instantiate(_hintPrefab, Camera.main.transform.position + Camera.main.transform.forward, Quaternion.identity);
-            if (hintObject != null) Destroy(hintObject);
-            hintObject = Instantiate(_hintPrefab, Camera.main.transform.position + (this.transform.position - Camera.main.transform.position).normalized, Quaternion.identity);
-            hintObject.transform.LookAt(2 * hintObject.transform.position - Camera.main.transform.position);
-            hintObject.GetComponent<TextMesh>().text = task.TaskName;*/
             if(task == null)
                 hintText.GetComponent<TextMesh>().text = "Well Done!";
             else

@@ -15,14 +15,27 @@ namespace ModelViewer
     [CustomEditor(typeof(MultiPartsObject))]
     public class MultiPartsObjectInspector : UnityEditor.Editor
     {
+        /// <summary>
+        /// the mpo associated with this editor
+        /// </summary>
         MultiPartsObject obj;
+
+        /// <summary>
+        /// toggle for the lock/unlock all nodes button
+        /// </summary>
         bool lockState;
+
+        /// <summary>
+        /// indent level for visualizing the tree
+        /// </summary>
+        int indentLevel;
 
         public override void OnInspectorGUI()
         {
             // draw default inspector gui
             base.OnInspectorGUI();
 
+            // get the target
             obj = (MultiPartsObject)target;
 
             // to setup internal data structure after inserting the gameobject
@@ -54,6 +67,7 @@ namespace ModelViewer
 
             GUILayout.Space(10);
 
+            // to unlock / lock all nodes with one click
             if(GUILayout.Button(lockState?"Unlock All Nodes":"Lock All Nodes"))
             {
                 lockState = !lockState;
@@ -65,11 +79,10 @@ namespace ModelViewer
             indentLevel = 0;
             DisplayNodeInfo(obj.Root);
 
+            // if something is changed in the editor, make scene dirty
             if (GUI.changed)
                 EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
         }
-
-        int indentLevel;
 
         /// <summary>
         /// displaying each node info

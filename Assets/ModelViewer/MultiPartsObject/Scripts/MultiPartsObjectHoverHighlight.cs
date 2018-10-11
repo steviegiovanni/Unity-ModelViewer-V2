@@ -13,16 +13,15 @@ namespace ModelViewer
     public class MultiPartsObjectHoverHighlight : MonoBehaviour
     {
         /// <summary>
-        /// the multipartsobject we're going to query this object to get the node info once we get a hover event
-        /// </summary>
-        [SerializeField]
-        private MultiPartsObject _mpo;
-
-        /// <summary>
         /// materials used when highlighting an objerct
         /// </summary>
         [SerializeField]
-        private Material _highlightMaterial;
+        private Material _onHoverMaterial;
+        public Material OnHoverMaterial
+        {
+            get { return _onHoverMaterial; }
+            set { _onHoverMaterial = value; }
+        }
 
         /// <summary>
         /// record the last gameobject that was previously hovered so we don't have to instantiate another highlight copy
@@ -41,8 +40,6 @@ namespace ModelViewer
             ObjectPointer.Instance.OnHoverEvent.AddListener(OnHoverEvent);
             yield return null;
         }
-
-        public GameObject empty; 
 
         // Use this for initialization
         void Start()
@@ -77,16 +74,15 @@ namespace ModelViewer
                 previouslyHovered = hovered;
                 if (tempHighlight != null)
                     GameObject.Destroy(tempHighlight);
-                
+
                 //tempHighlight = Instantiate(hovered,hovered.transform.position,hovered.transform.rotation);
-                tempHighlight = Instantiate(empty, hovered.transform.position, hovered.transform.rotation);
-                tempHighlight.GetComponent<MeshFilter>().sharedMesh = hovered.GetComponent<MeshFilter>().sharedMesh;
+                tempHighlight = new GameObject();
+                tempHighlight.transform.SetPositionAndRotation(hovered.transform.position,hovered.transform.rotation);
                 tempHighlight.transform.localScale = hovered.transform.lossyScale;
-                // remove the collider of the highlight object and change the material to the highlight material
-                if (tempHighlight.GetComponent<Collider>() != null)
-                    GameObject.Destroy(tempHighlight.GetComponent<Collider>());
-                if (tempHighlight.GetComponent<Renderer>() != null)
-                    tempHighlight.GetComponent<Renderer>().material = _highlightMaterial;
+                tempHighlight.AddComponent<MeshFilter>();
+                tempHighlight.GetComponent<MeshFilter>().sharedMesh = hovered.GetComponent<MeshFilter>().sharedMesh;
+                tempHighlight.AddComponent<MeshRenderer>();
+                tempHighlight.GetComponent<Renderer>().material = OnHoverMaterial;
             }
         }
     }
