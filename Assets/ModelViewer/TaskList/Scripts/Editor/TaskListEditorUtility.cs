@@ -15,7 +15,8 @@ namespace ModelViewer
         {
             return new string[]
             {
-                "Transform Event"
+                "Transform Event",
+                "Animator Event"
             };
         }
     }

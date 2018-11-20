@@ -13,10 +13,22 @@ namespace ModelViewer
     public class SerializableTaskEvent
     {
         public string TypeName;
+
+        // for transform task event
         public Vector3 StartPos;
         public Quaternion StartRotation;
         public Vector3 EndPos;
         public Quaternion EndRotation;
+        public float Duration;
+
+        // for animation task event
+        public GameObject GameObject;
+        public string AnimatorParam;
+        public float AnimatorParamValue;
+        public bool ModifyAnimatorParam;
+        public string AnimatorLayer;
+        public float AnimatorLayerAmount;
+        public bool ModifyAnimatorLayer;
 
         /// <summary>
         /// constructor, takes an actual taskevent and serialize it into its internal structure
@@ -34,7 +46,20 @@ namespace ModelViewer
                             EndPos = castedEvent.EndPos;
                             StartRotation = castedEvent.StartRotation;
                             EndRotation = castedEvent.EndRotation;
+                            Duration = castedEvent.Duration;
                         }break;
+                    case "AnimationTaskEvent":
+                        {
+                            AnimationTaskEvent castedEvent = taskEvent as AnimationTaskEvent;
+                            GameObject = castedEvent.GameObject;
+                            AnimatorParam = castedEvent.AnimatorParam;
+                            AnimatorParamValue = castedEvent.AnimatorParamValue;
+                            ModifyAnimatorParam = castedEvent.ModifyAnimatorParam;
+                            AnimatorLayer = castedEvent.AnimatorLayer;
+                            AnimatorLayerAmount = castedEvent.AnimatorLayerAmount;
+                            ModifyAnimatorLayer = castedEvent.ModifyAnimatorLayer;
+                        }
+                        break;
                 }
             }
         }

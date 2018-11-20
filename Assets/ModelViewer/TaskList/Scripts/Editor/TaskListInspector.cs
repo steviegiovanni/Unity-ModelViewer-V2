@@ -31,6 +31,20 @@ namespace ModelViewer
             }
         }
 
+        private int _selectedTaskEventId = -1;
+        public int SelectedTaskEventId
+        {
+            get { return _selectedTaskEventId; }
+            set
+            {
+                if(_selectedTaskEventId != value)
+                {
+                    _selectedTaskEventId = value;
+                    EditorGUI.FocusTextInControl(string.Empty);
+                }
+            }
+        }
+
         /// <summary>
         /// display this if the task is of type moving task
         /// </summary>
@@ -91,12 +105,51 @@ namespace ModelViewer
             }
         }
 
+        public void DisplayAnimationTaskEventIOfTask(Task t, int index)
+        {
+            AnimationTaskEvent tte = t.TaskEvents[index] as AnimationTaskEvent;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Model Controller", GUILayout.Width(100));
+            tte.GameObject = (GameObject)EditorGUILayout.ObjectField(tte.GameObject, typeof(GameObject), true);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Parameter", GUILayout.Width(100));
+            tte.AnimatorParam = EditorGUILayout.TextField(tte.AnimatorParam);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Value", GUILayout.Width(100));
+            tte.AnimatorParamValue = EditorGUILayout.FloatField(tte.AnimatorParamValue);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Modify Parameter", GUILayout.Width(100));
+            tte.ModifyAnimatorParam = EditorGUILayout.Toggle(tte.ModifyAnimatorParam);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Layer", GUILayout.Width(100));
+            tte.AnimatorLayer = EditorGUILayout.TextField(tte.AnimatorLayer);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Amount", GUILayout.Width(100));
+            tte.AnimatorLayerAmount = EditorGUILayout.FloatField(tte.AnimatorLayerAmount);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Modify Layer", GUILayout.Width(100));
+            tte.ModifyAnimatorLayer = EditorGUILayout.Toggle(tte.ModifyAnimatorLayer);
+            GUILayout.EndHorizontal();
+        }
+
         /// <summary>
         /// display task event of type transformtaskevent
         /// </summary>
-        public void DisplayTransformTaskEventOfTask(Task t)
+        public void DisplayTransformTaskEventIOfTask(Task t, int index)
         {
-            TransformTaskEvent tte = t.TaskEvent as TransformTaskEvent;
+            TransformTaskEvent tte = t.TaskEvents[index] as TransformTaskEvent;
             // to modify start and end position
             GUILayout.Label("Start");
             GUILayout.BeginHorizontal();
@@ -171,6 +224,11 @@ namespace ModelViewer
                     tte.EndRotation = Quaternion.Inverse(obj.transform.rotation) * t.GameObject.transform.rotation;
                 }
             }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Duration ");
+            tte.Duration = EditorGUILayout.FloatField(tte.Duration);
+            GUILayout.EndHorizontal();
         }
 
         /// <summary>
@@ -200,6 +258,12 @@ namespace ModelViewer
             t.TaskName = GUILayout.TextField(t.TaskName);
             GUILayout.EndHorizontal();
 
+            // task delay
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Delay", GUILayout.Width(50));
+            t.TaskDelay = EditorGUILayout.FloatField(t.TaskDelay);
+            GUILayout.EndHorizontal();
+
             // task description
             GUILayout.BeginHorizontal();
             GUILayout.Label("Description");
@@ -219,52 +283,91 @@ namespace ModelViewer
             }
             GUILayout.EndVertical();
 
-            // for task event
+            // for task events
             GUILayout.BeginVertical(EditorStyles.helpBox);
-            if (t.TaskEvent != null)
+            for (int i = 0; i < t.TaskEvents.Count; i++)
             {
-                // task event type
-                GUILayout.Label(t.TaskEvent.GetType().Name,EditorStyles.boldLabel);
+                GUILayout.BeginHorizontal();
 
-                switch (t.TaskEvent.GetType().Name)
-                {
-                    case "TransformTaskEvent":
-                        {
-                            DisplayTransformTaskEventOfTask(t);
-                        }break;
-                }
+                var tevent = t.TaskEvents[i];
 
-                if (GUILayout.Button("Remove Task Event"))
+                GUIStyle style = new GUIStyle(EditorStyles.toolbarButton);
+                style.alignment = TextAnchor.MiddleLeft;
+                bool clicked = GUILayout.Toggle(i == SelectedTaskEventId, i + 1 + ". " + tevent.GetType().Name, style);
+                if (clicked != (i == SelectedTaskEventId))
                 {
-                    t.TaskEvent = null;
-                }
-            }
-            else
-            {
-                if (GUILayout.Button("Add Task Event"))
-                {
-                    GenericMenu genericMenu = new GenericMenu();
-                    for (int eventTypeId = 0; eventTypeId < TaskListEditorUtility.EventTypes().Length; eventTypeId++)
+                    if (clicked)
                     {
-                        genericMenu.AddItem(new GUIContent(TaskListEditorUtility.EventTypes()[eventTypeId]), false,
-                            (param) =>
-                            {
-                                int index = (int)param;
-                                switch (index)
-                                {
-                                    case 0:
-                                        {
-                                            t.TaskEvent = new TransformTaskEvent();
-                                        }
-                                        break;
-                                }
-                            }
-                        , eventTypeId);
+                        SelectedTaskEventId = i;
+                        GUI.FocusControl(null);
                     }
-                    genericMenu.ShowAsContext();
+                    else
+                    {
+                        SelectedTaskEventId = -1;
+                    }
                 }
+
+                // remove task from task event list
+                if (GUILayout.Button("-", EditorStyles.toolbarButton, GUILayout.Width(30)))
+                {
+                    if (SelectedTaskEventId != -1)
+                        SelectedTaskEventId = -1;
+                    t.TaskEvents.RemoveAt(i);
+                }
+
+                GUILayout.EndHorizontal();
+
+                // display task detail if task is selected
+                if (i == SelectedTaskEventId)
+                {
+                    switch (tevent.GetType().Name)
+                    {
+                        case "TransformTaskEvent":
+                            {
+                                DisplayTransformTaskEventIOfTask(t, i);
+                            }
+                            break;
+                        case "AnimationTaskEvent":
+                            {
+                                DisplayAnimationTaskEventIOfTask(t, i);
+                            }
+                            break;
+                    }
+                }
+
+                /*if (GUILayout.Button("Remove Task Event"))
+                {
+                    t.TaskEvents.Remove(tevent);
+                }*/
             }
 
+            if (GUILayout.Button("Add Task Event"))
+            {
+                GenericMenu genericMenu = new GenericMenu();
+                for (int eventTypeId = 0; eventTypeId < TaskListEditorUtility.EventTypes().Length; eventTypeId++)
+                {
+                    genericMenu.AddItem(new GUIContent(TaskListEditorUtility.EventTypes()[eventTypeId]), false,
+                        (param) =>
+                        {
+                            int index = (int)param;
+                            switch (index)
+                            {
+                                case 0:
+                                    {
+                                        t.TaskEvents.Add( new TransformTaskEvent());
+                                    }
+                                    break;
+                                case 1:
+                                    {
+                                        t.TaskEvents.Add( new AnimationTaskEvent());
+                                    }
+                                    break;
+                            }
+                        }
+                    , eventTypeId);
+                }
+                genericMenu.ShowAsContext();
+            }
             GUILayout.EndVertical();
         }
 

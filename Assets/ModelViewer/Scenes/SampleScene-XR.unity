@@ -318,6 +318,7 @@ MonoBehaviour:
   serializedTasks:
   - TypeName: MovingTask
     GameObject: {fileID: 1742190048}
+    TaskDelay: 0
     Position: {x: 0, y: 0, z: 0}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
     SnapThreshold: 0.5064516
@@ -325,14 +326,10 @@ MonoBehaviour:
     Description: 
     MoveType: 0
     GOName: Cube
-    TaskEvent:
-      TypeName: TransformTaskEvent
-      StartPos: {x: 0, y: 0, z: 0}
-      StartRotation: {x: 0, y: 0, z: 0, w: 1}
-      EndPos: {x: 0, y: 0, z: 0}
-      EndRotation: {x: 0, y: -0.38268343, z: 0, w: 0.92387956}
+    TaskEvents: []
   - TypeName: MovingTask
     GameObject: {fileID: 319424069}
+    TaskDelay: 0
     Position: {x: 0, y: 0.93, z: 0}
     Rotation: {x: 0, y: -0.38268343, z: 0, w: 0.92387956}
     SnapThreshold: 0.50092167
@@ -340,12 +337,7 @@ MonoBehaviour:
     Description: 
     MoveType: 1
     GOName: Sphere
-    TaskEvent:
-      TypeName: 
-      StartPos: {x: 0, y: 0, z: 0}
-      StartRotation: {x: 0, y: 0, z: 0, w: 0}
-      EndPos: {x: 0, y: 0, z: 0}
-      EndRotation: {x: 0, y: 0, z: 0, w: 0}
+    TaskEvents: []
   OnTaskFinished:
     m_PersistentCalls:
       m_Calls: []

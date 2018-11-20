@@ -67,6 +67,7 @@ namespace ModelViewer
             EndPos = ste.EndPos;
             StartRotation = ste.StartRotation;
             EndRotation = ste.EndRotation;
+            Duration = ste.Duration;
         }
 
         /// <summary>
@@ -96,7 +97,6 @@ namespace ModelViewer
             while(curTime - startTime < Duration)
             {
                 curTime += Time.deltaTime;
-
                 taskObj.transform.SetPositionAndRotation(taskObj.transform.position + (Task.TaskList.MPO.transform.TransformPoint(EndPos) - Task.TaskList.MPO.transform.TransformPoint(StartPos)) * Time.deltaTime / Duration, Quaternion.Lerp(Task.TaskList.MPO.transform.rotation * StartRotation, Task.TaskList.MPO.transform.rotation *EndRotation, (curTime - startTime) / Duration));
 
                 for (int i = 0; i < taskObj.transform.childCount; i++)
