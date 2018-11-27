@@ -230,6 +230,7 @@ MonoBehaviour:
     Locked: 0
     Name: GameObject
     GOName: GameObject
+    Description: 
   - ChildCount: 1
     IndexOfFirstChild: 2
     GameObject: {fileID: 1742190048}
@@ -245,6 +246,7 @@ MonoBehaviour:
     Locked: 0
     Name: Cube
     GOName: Cube
+    Description: test description
   - ChildCount: 0
     IndexOfFirstChild: 3
     GameObject: {fileID: 319424069}
@@ -260,6 +262,7 @@ MonoBehaviour:
     Locked: 0
     Name: Sphere
     GOName: Sphere
+    Description: 
 --- !u!4 &77434000
 Transform:
   m_ObjectHideFlags: 0
@@ -915,6 +918,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f560b725aadb234ab2a8b384dc07224, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _length: Infinity
   _ray: {fileID: 1948703325}
   _rayVisible: 1
 --- !u!120 &1948703329
